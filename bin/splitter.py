@@ -103,7 +103,7 @@ if __name__== '__main__':
     arg_parser.add_argument(
         "-i", "--infile",
         default='-',
-        help="Input TRF dat file. Default is '-' (stdin)"
+        help="Default is '-' (stdin)"
         )
     arg_parser.add_argument(
         "-n",

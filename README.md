@@ -12,7 +12,7 @@ But if you're interested, please feel free to contact me.
 
 - [x] interproscan
 - [x] deltablast against swissprot
-- [ ] deltablast against pdb
+- [x] deltablast against pdb
 - [ ] deltablast against refseq
 - [ ] rpsblast against Cdd
 - [x] signalp
@@ -21,7 +21,7 @@ But if you're interested, please feel free to contact me.
 - [ ] secretomep
 - [x] transposonPSI
 - [ ] [PredictProtiein](https://www.predictprotein.org/) secondary structure prediction
-- [ ] [dbCAN](http://csbl.bmb.uga.edu/dbCAN/index.php)
+- [x] [dbCAN](http://csbl.bmb.uga.edu/dbCAN/index.php)
 
 Eventually I'd like to get this running in a [docker](https://www.docker.com/) container for portability.
 
@@ -44,14 +44,14 @@ prerequisite software:
 
 Assumes that you have these blast databases available on the `BLASTDB` path:
 
-- Cdd
+- cdd_delta
 - taxdb
 - swissprot
-- pbd protein
+- pbd
 
 You can easily download these with the following commands from your desired directory:
 
 ```bash
-$ wget -t0 --timestamping --no-remove-listing "ftp://ftp.ncbi.nih.gov/pub/mmdb/cdd/little_endian/*" && tar zxf Cdd_LE.tar.gz
-$ update_blastdb.pl --decompress taxdb cdd_delta pdbaa refseq_protein swissprot
+$ # wget -t0 --timestamping --no-remove-listing "ftp://ftp.ncbi.nih.gov/pub/mmdb/cdd/little_endian/*" && tar zxf Cdd_LE.tar.gz
+$ update_blastdb.pl --decompress taxdb cdd_delta pdbaa swissprot
 ```
