@@ -1,21 +1,24 @@
 C=$(shell pwd)
 DATA=$(C)/data
-PROT_FILE=I5V.codingquarry.faa
+PROT_FILE=B04.protein.faa
 ISOLATE=$(word 1, $(subst ., ,$(PROT_FILE)))
 
 THREADS=1
 PYTHON=python
 LEGACY_BLAST=/home/darcy/bin/blast-2.2.26
 
-SPLITTER=$(PYTHON) $(C)/lib/splitter.py -i $(1) -p $(2) -n $(3)
+SPLITTER=$(PYTHON) $(C)/bin/splitter.py -i $(1) -p $(2) -n $(3)
 IPS=@echo /usr/local/interproscan/5.15-54.0/interproscan-5.15-54.0/interproscan.sh -f TSV,XML,GFF3,HTML,SVG --goterms -dp --iprlookup --pathways -t p -i $(1) --output-dir $(2)
 SIGNALP=signalp -f short -n $(1) -l $(2) < $(3) > $(4)
 TMHMM=/usr/local/tmhmm/2.0c/bin/tmhmm < $(1) > $(2)
 TARGETP=targetp -c -$(1) < $(2) > $(3)
+SECRETOMEP=/usr/local/secretomep/1.0/secretomep $(1) > $(2)
 TPSI=/usr/local/transposonpsi/08222010/transposonPSI.pl $(1) prot
 DELTABLAST=deltablast -db $(1) -query $(2) -out $(3) -outfmt 11 -num_threads $(THREADS) -use_sw_tback
-HMMSCAN=hmmscan --domtblout $(1) dbCAN-fam-HMMs.txt $(2) > $(3)
+HMMSCAN=hmmscan --domtblout $(1) $(DATA)/dbCAN-fam-HMMs.txt $(2) > $(3)
 HMMSCAN_PARSER=hmmscan-parser.sh $(1) > $(2)
+
+
 
 BLOCK_SIZE=1000
 NSEQS = $(shell grep -c '>' $(1))
@@ -42,6 +45,9 @@ TARGETP_DIR=$(C)/targetp
 TARGETP_EXTS=.targetp.npn.out .targetp.pn.out
 TARGETP_FILES=$(foreach e, $(TARGETP_EXTS), $(foreach f, $(SPLIT_FILES), $(TARGETP_DIR)/$(addsuffix $(e), $(notdir $(f)))))
 
+SECRETOMEP_DIR=$(C)/secretomep
+SECRETOMEP_FILES=$(foreach f, $(SPLIT_FILES), $(SECRETOMEP_DIR)/$(addsuffix .out, $(notdir $(f))))
+
 TPSI_DIR=$(C)/tpsi
 TPSI_EXTS=.TPSI.allHits .TPSI.topHits
 TPSI_FILES=$(foreach e, $(TPSI_EXTS), $(foreach f, $(SPLIT_FILES), $(TPSI_DIR)/$(addsuffix $(e), $(notdir $(f)))))
@@ -59,7 +65,7 @@ DBCAN_FILES=$(foreach e, $(DBCAN_EXTS), $(foreach f, $(SPLIT_FILES), $(DBCAN_DIR
 
 ## Commands
 
-all: split signalp tmhmm targetp transposonpsi swissprot pdb
+all: split signalp tmhmm targetp transposonpsi swissprot pdb secretomep
 
 #interproscan
 
@@ -68,6 +74,7 @@ interproscan: $(IPS_FILES)
 signalp: $(SIGNALP_FILES)
 tmhmm: $(TMHMM_FILES)
 targetp: $(TARGETP_FILES)
+secretomep: $(SECRETOMEP_FILES)
 transposonpsi: $(TPSI_FILES)
 swissprot: $(SWISSPROT_BLAST_FILES)
 pdb: $(PDB_BLAST_FILES)
@@ -100,6 +107,10 @@ $(TARGETP_DIR)/%.targetp.pn.out: $(SPLIT_DIR)/%
 	mkdir -p $(dir $@)
 	$(call TARGETP,P, $<, $@)
 
+$(SECRETOMEP_DIR)/%.out: $(SPLIT_DIR)/%
+	mkdir -p $(dir $@)
+	$(call SECRETOMEP, $<, $@)
+
 $(foreach e, $(TPSI_EXTS), $(TPSI_DIR)/%$(e)): $(SPLIT_DIR)/%
 	mkdir -p $(dir $@)
 	export PATH=$(LEGACY_BLAST)/bin:$(PATH);export BLASTMAT=$(LEGACY_BLAST)/data;cd $(dir $@);$(call TPSI, $<)
@@ -110,7 +121,7 @@ $(SWISSPROT_BLAST_DIR)/%.asn: $(SPLIT_DIR)/%
 
 $(PDB_BLAST_DIR)/%.asn: $(SPLIT_DIR)/%
 	mkdir -p $(dir $@)
-	$(call DELTABLAST, pdb, $<, $@)
+	$(call DELTABLAST, pdbaa $<, $@)
 
 $(foreach e, $(DBCAN_EXTS), $(DBCAN_DIR)/%$(e)): $(SPLIT_DIR)/%
 	mkdir -p $(dir $@)
