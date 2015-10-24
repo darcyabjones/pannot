@@ -14,7 +14,7 @@ TMHMM=/usr/local/tmhmm/2.0c/bin/tmhmm < $(1) > $(2)
 TARGETP=targetp -c -$(1) < $(2) > $(3)
 SECRETOMEP=/usr/local/secretomep/1.0/secretomep $(1) > $(2)
 TPSI=/usr/local/transposonpsi/08222010/transposonPSI.pl $(1) prot
-DELTABLAST=@echo deltablast -db $(1) -query $(2) -out $(3) -outfmt 11 -num_threads $(THREADS) -use_sw_tback
+DELTABLAST=deltablast -db $(1) -query $(2) -out $(3) -outfmt 11 -num_threads $(THREADS) -use_sw_tback
 HMMSCAN=hmmscan --domtblout $(1) $(DATA)/dbCAN-fam-HMMs.txt $(2) > $(3)
 HMMSCAN_PARSER=hmmscan-parser.sh $(1) > $(2)
 
