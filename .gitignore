@@ -72,6 +72,8 @@ target/
 *.fa
 *.faa
 *.asn
+*.ps
+*.dm
 
 *.txt
 *.txt.h3f
