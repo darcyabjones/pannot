@@ -1,6 +1,6 @@
 C=$(shell pwd)
 DATA=$(C)/data
-PROT_FILE=B04.protein.faa
+PROT_FILE=MNH120.Auto.protein.faa
 ISOLATE=$(word 1, $(subst ., ,$(PROT_FILE)))
 
 THREADS=1
@@ -84,7 +84,7 @@ dbcan: $(DBCAN_FILES)
 $(SPLIT_FILES): $(DATA)/$(PROT_FILE)
 	rm -f $(dir $@)*
 	mkdir -p $(dir $@)
-	$(call SPLITTER, $<, $(dir $@)$(word 1, $(subst ., ,$(notdir $<))), $(BLOCK_SIZE))
+	$(call SPLITTER, $<, $(dir $@)$(ISOLATE), $(BLOCK_SIZE))
 	sed -i -e 's/\*//g' $(SPLIT_FILES)
 
 $(foreach e, $(IPS_EXTS), $(IPS_DIR)/%$(e)): $(SPLIT_DIR)/%
