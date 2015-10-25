@@ -12,7 +12,8 @@ IPS=@echo /usr/local/interproscan/5.15-54.0/interproscan-5.15-54.0/interproscan.
 SIGNALP=signalp -f short -n $(1) -l $(2) < $(3) > $(4)
 TMHMM=/usr/local/tmhmm/2.0c/bin/tmhmm < $(1) > $(2)
 TARGETP=targetp -c -$(1) < $(2) > $(3)
-SECRETOMEP=/usr/local/secretomep/1.0/secretomep $(1) > $(2)
+RENAME=$(PYTHON) $(C)/bin/rename_fasta.py -i $(1) -o $(2) -j $(3)
+SECRETOMEP=/usr/local/secretomep/1.0/secretomep
 TPSI=/usr/local/transposonpsi/08222010/transposonPSI.pl $(1) prot
 DELTABLAST=deltablast -db $(1) -query $(2) -out $(3) -outfmt 11 -num_threads $(THREADS) -use_sw_tback
 HMMSCAN=hmmscan --domtblout $(1) $(DATA)/dbCAN-fam-HMMs.txt $(2) > $(3)
@@ -109,7 +110,9 @@ $(TARGETP_DIR)/%.targetp.pn.out: $(SPLIT_DIR)/%
 
 $(SECRETOMEP_DIR)/%.out: $(SPLIT_DIR)/%
 	mkdir -p $(dir $@)
-	$(call SECRETOMEP, $<, $@)
+	$(call RENAME, $<, -, $@.json)|$(call SECRETOMEP) > $@.tmp
+	$(call RENAME, $@.tmp, $@, $@.json) -d
+	rm $@.tmp
 
 $(foreach e, $(TPSI_EXTS), $(TPSI_DIR)/%$(e)): $(SPLIT_DIR)/%
 	mkdir -p $(dir $@)
@@ -120,7 +123,6 @@ $(SWISSPROT_BLAST_DIR)/%.asn: $(SPLIT_DIR)/%
 	$(call DELTABLAST, swissprot, $<, $@)
 
 $(PDB_BLAST_DIR)/%.asn: $(SPLIT_DIR)/%
-	@echo $<
 	mkdir -p $(dir $@)
 	$(call DELTABLAST, pdbaa, $<, $@)
 

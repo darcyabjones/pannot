@@ -57,7 +57,7 @@ def outhandler(fp, mode='w'):
     else:
         return open(fp, mode)
 
-def main(infile, outfile, json_file, decode=False, split=r'\s+', col=0):
+def main(infile, outfile, json_file, decode=False, split=r'\s+', col=0, hold=False):
     start_regex = re.compile(r'>')
     split_regex = re.compile(split)
     if not decode:
@@ -72,15 +72,16 @@ def main(infile, outfile, json_file, decode=False, split=r'\s+', col=0):
                 if line == '':
                     continue
                 elif start_regex.match(line) is not None:
-                    outhandle.write('\n'.join(lines) + '\n')
-                    lines = list()
+                    if not hold:
+                        outhandle.write('\n'.join(lines) + '\n')
+                        lines = list()
                     new_id = "g{:0=9}".format(record_num)
-                    new_ids[new_id] = line.lstrip('>').strip()
+                    new_ids[new_id] = line.lstrip('>').strip().split(' ')[0]
                     line = '>{}'.format(new_id)
                     record_num += 1
                 lines.append(line)
-            outhandle.write('\n'.join(lines) + '\n')
             json.dump(new_ids, jsonhandle)
+            outhandle.write('\n'.join(lines) + '\n')
     else:
         with inhandler(infile, mode='rU') as inhandle,\
                 outhandler(outfile, mode='w') as outhandle,\
@@ -90,14 +91,21 @@ def main(infile, outfile, json_file, decode=False, split=r'\s+', col=0):
                 return new_ids[m.group(0)]
 
             id_regex = re.compile('|'.join(new_ids.keys()))
+            lines = list()
             for line in inhandle:
                 line = line.strip()
                 if line == '' or line.startswith('#'):
-                    outhandle.write(line + '\n')
+                    lines.append(line)
+                    if not hold:
+                        outhandle.write(line + '\n')
                 else:
                     sline = split_regex.split(line)
                     line = id_regex.sub(repl, line)
-                    outhandle.write(line + '\n')
+                    lines.append(line)
+                    if not hold:
+                        outhandle.write(line + '\n')
+            if hold:
+                outhandle.write('\n'.join(lines))
     return
 
 ############################ Argument Handling ###############################
@@ -138,7 +146,12 @@ if __name__== '__main__':
         default=0,
         help="",
         )
-
+    arg_parser.add_argument(
+        "-l", "--hold",
+        default=False,
+        action='store_true',
+        help="",
+        )
 
 
     args = arg_parser.parse_args()
