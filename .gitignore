@@ -55,3 +55,27 @@ docs/_build/
 
 # PyBuilder
 target/
+
+
+*.dat
+*.log
+*.out
+*.gff3
+*.tar.gz
+*.tsv
+*.gnuplot
+*.plp
+*.xml
+*.allHits
+*.topHits
+*.fasta
+*.fa
+*.faa
+*.asn
+
+*.txt
+*.txt.h3f
+*.txt.h3i
+*.txt.h3m
+*.txt.h3p
+
