@@ -1,6 +1,6 @@
 C=$(shell pwd)
 DATA=$(C)/data
-PROT_FILE=B04.protein.faa
+PROT_FILE=I5V.codingquarry.faa
 ISOLATE=$(word 1, $(subst ., ,$(PROT_FILE)))
 
 THREADS=1
