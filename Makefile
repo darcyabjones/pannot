@@ -65,7 +65,7 @@ DBCAN_FILES=$(foreach e, $(DBCAN_EXTS), $(foreach f, $(SPLIT_FILES), $(DBCAN_DIR
 
 ## Commands
 
-all: split signalp tmhmm targetp transposonpsi swissprot pdb secretomep
+all: split signalp tmhmm targetp transposonpsi swissprot pdb secretomep dbcan
 
 #interproscan
 
