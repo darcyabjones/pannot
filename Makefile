@@ -144,7 +144,7 @@ $(SECRETOMEP_DIR)/%.out: $(SPLIT_DIR)/%
 	mkdir -p $(dir $@)
 	$(call RENAME, $<, -, $@.json)|$(call SECRETOMEP) > $@.tmp
 	$(call RENAME, $@.tmp, $@, $@.json) -d
-	rm $@.tmp
+	rm $@.tmp $@.json
 
 $(SECRETOMEP_CMB_FILE): $(SECRETOMEP_FILES)
 	 awk '!/^#/ && !/^$$/' $^ > $@
