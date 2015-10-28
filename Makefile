@@ -1,6 +1,6 @@
 C=$(shell pwd)
 DATA=$(C)/data
-PROT_FILE=I5V.codingquarry.faa
+PROT_FILE=B04.protein.faa
 ISOLATE=$(word 1, $(subst ., ,$(PROT_FILE)))
 EMPTY :=
 SPACE := $(EMPTY) $(EMPTY)
@@ -23,6 +23,7 @@ DELTABLAST=deltablast -db $(1) -query $(2) -out $(3) -outfmt 11 -num_threads $(T
 HMMSCAN=hmmscan --domtblout $(1) $(DATA)/dbCAN-fam-HMMs.txt $(2) > $(3)
 HMMSCAN_PARSER=hmmscan-parser.sh $(1) > $(2)
 BLAST_FORMATTER=blast_formatter -archive $(1) -out - -outfmt '6 $(BLAST_COLS)'
+LOCATORP=$(C)/bin/locatorp.py -s $(1) -e $(2) -t $(3) -a $(4) -o $(5)
 
 
 
@@ -37,7 +38,7 @@ SPLIT_FNAMES = $(foreach i, $(call RANGE, $(call NSEQS, $(1))), $(addsuffix -$(i
 SPLIT_DIR = $(C)/split_aa
 SPLIT_FILES = $(call SPLIT_FNAMES, $(DATA)/$(PROT_FILE), $(SPLIT_DIR)/$(ISOLATE))
 
-IPS_DIR = $(C)/sub_ips
+IPS_DIR = $(C)/interproscan
 IPS_EXTS=.tsv .xml .gff3 .html .svg
 IPS_FILES = $(foreach e, $(EXTS), $(foreach f, $(SPLIT_FILES), $(IPS_DIR)/$(notdir $(f))$(e)))
 IPS_CMB_TSV_FILE=$(IPS_DIR)/$(ISOLATE).combined.tsv
@@ -79,9 +80,11 @@ DBCAN_EXTS=.out .out.dm .out.dm.ps
 DBCAN_FILES=$(foreach e, $(DBCAN_EXTS), $(foreach f, $(SPLIT_FILES), $(DBCAN_DIR)/$(addsuffix $(e), $(notdir $(f)))))
 DBCAN_CMB_FILE=$(DBCAN_DIR)/$(ISOLATE).combined.out.dm.ps
 
-## Commands
+LOCATION_DIR=$(C)/location
+LOCATION_FILE=$(LOCATION_DIR)/$(ISOLATE).location.tsv
 
-all: split signalp tmhmm targetp transposonpsi swissprot pdb secretomep dbcan
+## Commands
+all: split signalp tmhmm targetp transposonpsi swissprot pdb secretomep dbcan interproscan
 
 #interproscan
 
@@ -95,6 +98,7 @@ transposonpsi: $(TPSI_FILES) $(TPSI_CMB_FILE)
 swissprot: $(SWISSPROT_BLAST_FILES) $(SWISSPROT_CMB_TSV_FILE)
 pdb: $(PDB_BLAST_FILES) $(PDB_CMB_TSV_FILE)
 dbcan: $(DBCAN_FILES) $(DBCAN_CMB_FILE)
+locatorp: $(LOCATION_FILE)
 
 
 $(SPLIT_FILES): $(DATA)/$(PROT_FILE)
@@ -107,7 +111,7 @@ $(foreach e, $(IPS_EXTS), $(IPS_DIR)/%$(e)): $(SPLIT_DIR)/%
 	mkdir -p $(dir $@)
 	$(call IPS, $<, $(dir $@))
 
-$(IPS_CMB_TSV_FILE): $(IPS_DIR)/*.tsv
+$(IPS_CMB_TSV_FILE): $(filter-out $(IPS_CMB_TSV_FILE), $(IPS_DIR)/*.tsv)
 	cat $^ > $@
 
 $(SIGNALP_DIR)/%.signalp.out: $(SPLIT_DIR)/%
@@ -128,7 +132,7 @@ $(TARGETP_DIR)/%.targetp.npn.out: $(SPLIT_DIR)/%
 	mkdir -p $(dir $@)
 	$(call TARGETP,N, $<, $@)
 
-$(TARGETP_CMB_NPN_FILE): $(TARGETP_DIR)/*.targetp.npn.out
+$(TARGETP_CMB_NPN_FILE): $(filter-out $(TARGETP_CMB_NPN_FILE), $(TARGETP_DIR)/*.targetp.npn.out)
 	echo '' > $@
 	$(foreach f, $^, head -n -1 $(f)|awk '/^-/{flag=0}flag;/^-/{flag=1;next}' >> $@;)
 
@@ -136,7 +140,7 @@ $(TARGETP_DIR)/%.targetp.pn.out: $(SPLIT_DIR)/%
 	mkdir -p $(dir $@)
 	$(call TARGETP,P, $<, $@)
 
-$(TARGETP_CMB_PN_FILE): $(TARGETP_DIR)/*.targetp.pn.out
+$(TARGETP_CMB_PN_FILE): $(filter-out $(TARGETP_CMB_PN_FILE), $(TARGETP_DIR)/*.targetp.pn.out)
 	echo '' > $@
 	$(foreach f, $^, sed '$$d' $(f)|awk '/^-/{flag=0}flag;/^-/{flag=1;next}' >> $@;)
 
@@ -153,7 +157,7 @@ $(foreach e, $(TPSI_EXTS), $(TPSI_DIR)/%$(e)): $(SPLIT_DIR)/%
 	mkdir -p $(dir $@)
 	export PATH=$(LEGACY_BLAST)/bin:$(PATH);export BLASTMAT=$(LEGACY_BLAST)/data;cd $(dir $@);$(call TPSI, $<)
 
-$(TPSI_CMB_FILE): $(TPSI_DIR)/*.TPSI.topHits
+$(TPSI_CMB_FILE): $(filter-out $(TPSI_CMB_FILE), $(TPSI_DIR)/*.TPSI.topHits)
 	awk '!/^\/\// && !/^$$/' $^ > $@
 
 $(SWISSPROT_BLAST_DIR)/%.asn: $(SPLIT_DIR)/%
@@ -161,7 +165,7 @@ $(SWISSPROT_BLAST_DIR)/%.asn: $(SPLIT_DIR)/%
 	$(call DELTABLAST, swissprot, $<, $@)
 
 $(SWISSPROT_CMB_TSV_FILE): $(SWISSPROT_BLAST_FILES)
-	echo $(subst $(SPACE),	,$(BLAST_COLS)) > $@
+	echo "$(subst $(SPACE),	,$(BLAST_COLS))" > $@
 	$(foreach f, $^, $(call BLAST_FORMATTER, $(f)) >> $@;)
 
 $(PDB_BLAST_DIR)/%.asn: $(SPLIT_DIR)/%
@@ -169,7 +173,7 @@ $(PDB_BLAST_DIR)/%.asn: $(SPLIT_DIR)/%
 	$(call DELTABLAST, pdbaa, $<, $@)
 
 $(PDB_CMB_TSV_FILE): $(PDB_BLAST_FILES)
-	echo $(subst $(SPACE),	,$(BLAST_COLS)) > $@
+	echo "$(subst $(SPACE),	,$(BLAST_COLS))" > $@
 	$(foreach f, $^, $(call BLAST_FORMATTER, $(f)) >> $@;)
 
 $(foreach e, $(DBCAN_EXTS), $(DBCAN_DIR)/%$(e)): $(SPLIT_DIR)/%
@@ -177,5 +181,9 @@ $(foreach e, $(DBCAN_EXTS), $(DBCAN_DIR)/%$(e)): $(SPLIT_DIR)/%
 	$(call HMMSCAN, $(dir $@)$(notdir $(basename $<)).out.dm, $<, $(dir $@)$(notdir $(basename $<)).out)
 	$(call HMMSCAN_PARSER, $(dir $@)$(notdir $(basename $<)).out.dm, $(dir $@)$(notdir $(basename $<)).out.dm.ps)
 
-$(DBCAN_CMB_FILE): $(DBCAN_DIR)/*.out.dm.ps
+$(DBCAN_CMB_FILE): $(filter-out $(DBCAN_CMB_FILE), $(DBCAN_DIR)/*.out.dm.ps)
 	cat $^ > $@
+
+$(LOCATION_FILE): $(SIGNALP_CMB_FILE) $(SECRETOMEP_CMB_FILE) $(TMHMM_CMB_FILE) $(TARGETP_CMB_NPN_FILE)
+	mkdir $(dir $@)
+	$(call LOCATORP, $(word 1, $^), $(word 2, $^), $(word 3, $^), $(word 4, $^), $@)
