@@ -55,3 +55,20 @@ You can easily download these with the following commands from your desired dire
 $ # wget -t0 --timestamping --no-remove-listing "ftp://ftp.ncbi.nih.gov/pub/mmdb/cdd/little_endian/*" && tar zxf Cdd_LE.tar.gz
 $ update_blastdb.pl --decompress taxdb cdd_delta pdbaa swissprot
 ```
+
+
+download extra databases:
+
+```bash
+wget http://csbl.bmb.uga.edu/dbCAN/download/FamInfo.txt -O data/FamInfo.txt
+wget http://csbl.bmb.uga.edu/dbCAN/download/CAZyDB-ec-info.txt -O data/CAZyDB-ec-info.txt
+wget ftp://ftp.pantherdb.org//hmm_classifications/current_release/PANTHER10.0_HMM_classifications -O data/PANTHER10.0_HMM_classifications
+
+wget http://www.geneontology.org/external2go/pfam2go -O data/pfam2go
+wget http://www.geneontology.org/external2go/smart2go -O data/smart2go
+wget http://www.geneontology.org/external2go/interpro2go -O data/interpro2go
+wget http://geneontology.org/external2go/prosite2go -O data/prosite2go
+wget http://geneontology.org/external2go/prints2go -O data/prints2go
+wget http://geneontology.org/external2go/prodom2go -O data/prodom2go
+wget http://supfam.cs.bris.ac.uk/SUPERFAMILY/Domain2GO/Domain2GO_supported_only_by_all.txt -O data/domain2go
+```
