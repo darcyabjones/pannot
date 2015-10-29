@@ -231,4 +231,3 @@ $(GOSLIMTERMS_FILE): $(GOTERMS_FILE)
 	$(call GOLONG2ASSOC, $<, $<.assoc)
 	$(call MAP_TO_SLIM,$<.assoc)|$(call GOASSOC2LONG, -, $@)
 	@rm -f $<.assoc
-	@rm -f $@.assoc
