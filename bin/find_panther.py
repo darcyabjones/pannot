@@ -50,18 +50,64 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 
-class DB2GO(Base):
-    __tablename__ = 'db2go'
-    db = Column(String, index=True)
-    id = Column(String, index=True)
-    name = Column(String, default=None)
-    domain = Column(String, default=None)
-    goid = Column(String)
-    goterm = Column(String)
-    index = Index()
+class PANTHERRecord(object):
+    def __init__(self, line, sep='\t'):
+        self.sep = sep
+        self.line = line.rstrip('\n')
+        self.comment_pattern = '#'
+        self.cols = [
+            ('id', _parse_id),
+            ('name', _parse_str),
+            ('molecular_function', _parse_go),
+            ('biological_process', _parse_go),
+            ('cellular_components', _parse_go),
+            ('protein_class', _parse_go),
+            ('pathway', _parse_go),
+            ]
+        sline = line.split(self.sep)
+        for i, (col, fn) in enumerate(self.cols):
+            val = fn(col, sline[i])
 
+        return
 
+    def _parse_id(self, col, string):
+        string = string.split(':')
+        if len(string) == 1:
+            family, subfamily = string[0], None
+        else:
+            family, subfamily = string
+        self.__dict__.update({
+            'family': family,
+            'subfamily': subfamily,
+            'id':':'.join(string)
+            })
+            return
 
+    def _parse_str(col, str):
+        self.__dict__.update({col: str})
+
+    def _parse_go(col, str):
+        ontologies = str.split(';')
+        l = list()
+        for ontology in ontologies:
+            name, id_ = ontology.split('#')
+            l.append({'name': name, 'id': id_})
+        self.__dict__.update({col: l})
+
+class PANTHER2GO(dict):
+    def __init__(self, fp):
+        self.fp = fp
+        self.parse()
+        return
+
+    def parse(self):
+        with open(self.fp, 'rU') as handle:
+            for line in handle:
+                rec = PANTHERRecord(line)
+                self[rec.id] = rec
+        return
+
+class 
 
 
 
@@ -80,90 +126,9 @@ def outhandler(fp, mode='w'):
     else:
         return open(fp, mode)
 
-def parse_panther(handle):
-    def parse_id(col, string):
-        string = string.split(':')
-        if len(string) == 1:
-            family, subfamily = string[0], None
-        else:
-            family, subfamily = string
-        return {'family': family, 'subfamily': subfamily, 'id':':'.join(string)}
-
-    def parse_str(col, str):
-        return {col: str}
-
-    def parse_go(col, str):
-        ontologies = str.split(';')
-        l = list()
-        for ontology in ontologies:
-            name, id_ = ontology.split('#')
-            l.append({'name': name, 'id': id_})
-        return {col: l}
-
-    cols = [
-        ('id', parse_id),
-        ('name', parse_str),
-        ('molecular_function', parse_go),
-        ('biological_process', parse_go),
-        ('cellular_components', parse_go),
-        ('protein_class', parse_go),
-        ('pathway', parse_go),
-        ]
-
-    db = defaultdict(dict)
-    for line in handle:
-        line = line.strip()
-        if line.startswith('#'):
-            continue
-        line = line.split('\t')
-        entry = dict()
-        for (col, fn), val in zip(cols, line):
-            entry.update(fn(col, val))
-        db[entry['id']] = entry
-    return db
-
-pantherdb
-
-def parse_dbcan(handle):
-    cols = [
-        ('family'),
-        ('domain'),
-        ('class'),
-        ('note'),
-        ('activities'),
-        ]
-    fam_map = {
-        'Cellulosome': 'Cellulosome',
-        'GH': 'Glycoside Hydrolase',
-        'GT': 'Glycosyl hydrolase',
-        'PL': 'Polysaccharide lyase',
-        'CE': 'Carbohydrate esterase',
-        'AA': 'CAZyme auxiliary redox enzyme',
-        'CBM': 'Carbohydrate-binding module',
-        }
-    db = defaultdict(dict)
-    for line in handle:
-        line = line.strip()
-        if line.startswith('#'):
-            continue
-        line = line.split('\t')
-        entry = dict()
-        for col, val in zip(cols, line):
-            entry[col] = val
-        entry['class_longname'] = fam_map[entry['class']]
-        db[entry['family']] = entry
-    return db
-
-
-
-def main(infile, pantherfile, dbcanfile, outfile):
-    with open(pantherfile, 'rU') as handle:
-        pantherdb = parse_panther(handle)
-
-    with open(dbcanfile, 'rU') as handle:
-        dbcan = parse_dbcan(handle)
-
-
+def main(infile, pantherfile, outfile):
+    pantherdb = PANTHER2GO(pantherfile)
+    with inhandler(infile) as handle:
 
     return
 
