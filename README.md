@@ -41,6 +41,7 @@ prerequisite software:
 - [ProP](http://www.cbs.dtu.dk/cgi-bin/nph-sw_request?prop) (dependency of secretomep)
 - [PSORT II](http://psort.hgc.jp/) (dependency of secretomep). Hard to get, waiting for reply from <knakai@ims.u-tokyo.ac.jp> .
 - python 2.7+ or python 3.4+ (untested with other versions)
+- [goatools](https://github.com/tanghaibao/goatools)
 
 Assumes that you have these blast databases available on the `BLASTDB` path:
 
@@ -70,5 +71,11 @@ wget http://www.geneontology.org/external2go/interpro2go -O data/interpro2go
 wget http://geneontology.org/external2go/prosite2go -O data/prosite2go
 wget http://geneontology.org/external2go/prints2go -O data/prints2go
 wget http://geneontology.org/external2go/prodom2go -O data/prodom2go
-wget http://supfam.cs.bris.ac.uk/SUPERFAMILY/Domain2GO/Domain2GO_supported_only_by_all.txt -O data/domain2go
+wget http://geneontology.org/external2go/tigrfams2go -O data/tigrfams2go
+wget http://geneontology.org/external2go/pirsf2go -O data/pirsf2go
+wget http://geneontology.org/external2go/hamap2go -O data/hamap2go
+wget http://supfam.cs.bris.ac.uk/SUPERFAMILY/Domain2GO/Domain2GO_supported_only_by_all.txt -O data/Domain2GO_supported_only_by_all.txt
+
+wget http://purl.obolibrary.org/obo/go/go-basic.obo -O data/go-basic.obo
+wget http://www.geneontology.org/ontology/subsets/goslim_generic.obo -O data/goslim_generic.obo
 ```
