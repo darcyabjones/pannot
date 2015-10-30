@@ -100,11 +100,12 @@ def main(infile, outfile, pantherfile):
                 continue
 
             template = '{seqid}\t{ids}\t{names}\n'
-            handle.write(template.format(
-                seqid=query,
-                ids=';'.join(ids),
-                names=';'.join(names)
-                ))
+            for id_, name in zip(ids, names):
+                handle.write(template.format(
+                    seqid=query,
+                    ids=id_,
+                    names=name,
+                    ))
 
 
 

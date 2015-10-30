@@ -18,7 +18,9 @@ prodom2go=$(DATA)/prodom2go
 prosite2go=$(DATA)/prosite2go
 smart2go=$(DATA)/smart2go
 tigrfams2go=$(DATA)/tigrfams2go
-
+SCOPANNOTS=$(DATA)/scop.annotation.1.73.txt
+SCOPDESCS=$(DATA)/dir.des.scop.txt_1.75
+SCOPCATS=$(DATA)/scop.larger.categories
 
 THREADS=1
 PYTHON=python
@@ -43,10 +45,12 @@ GETGOS=$(C)/bin/get_gos.py -i $(1) -o $(2) --obofile $(go)\
 		--pantherfile $(PANTHERFAMCLASS) --pfamfile $(pfam2go) --smartfile $(smart2go)\
 		--interprofile $(interpro2go) --prositefile $(prosite2go) --printsfile $(prints2go)\
 		--prodomfile $(prodom2go) --tigrfamfile $(tigrfams2go) --pirsffile $(pirsf2go)\
-		--hamapfile $(hamap2go) --domainfile $(domain2go)
+		--hamapfile $(hamap2go)
 GOLONG2ASSOC=$(C)/bin/golong2assoc.py -i $(1) -o $(2)
 GOASSOC2LONG=$(C)/bin/goassoc2long.py -i $(1) -o $(2) --obofile $(go)
 MAP_TO_SLIM=map_to_slim.py --association_file=$(1) $(go) $(goslim)
+GET_SUPERFAMS=bin/get_superfams.py -i $(1) -o $(2) -a $(SCOPANNOTS) -d $(SCOPDESCS) -c $(SCOPCATS)
+
 
 BLOCK_SIZE=1000
 NSEQS = $(shell grep -c '>' $(1))
@@ -111,9 +115,13 @@ GOTERMS_DIR=$(C)/goterms
 GOTERMS_FILE=$(GOTERMS_DIR)/goterms.tsv
 GOSLIMTERMS_FILE=$(GOTERMS_DIR)/goslimterms.tsv
 
+SUPERFAMILY_DIR=$(C)/superfamily_terms
+SUPERFAMILY_FILE=$(SUPERFAMILY_DIR)/superfamilies.tsv
+
+
 ## Commands
 all: split signalp tmhmm targetp transposonpsi swissprot pdb secretomep \
-	dbcan interproscan pantherfams goterms
+	dbcan interproscan pantherfams goterms superfamilies
 
 #interproscan
 
@@ -130,6 +138,7 @@ dbcan: $(DBCAN_FILES) $(DBCAN_CMB_FILE)
 locatorp: $(LOCATION_FILE)
 pantherfams: $(PANTHER_FILE)
 goterms: $(GOTERMS_FILE) $(GOSLIMTERMS_FILE)
+superfamilies: $(SUPERFAMILY_FILE)
 
 $(SPLIT_FILES): $(DATA)/$(PROT_FILE)
 	rm -f $(dir $@)*
@@ -206,12 +215,12 @@ $(PDB_CMB_TSV_FILE): $(PDB_BLAST_FILES)
 	echo "$(subst $(SPACE),	,$(BLAST_COLS))" > $@
 	$(foreach f, $^, $(call BLAST_FORMATTER, $(f)) >> $@;)
 
-$(foreach e, $(DBCAN_EXTS), $(DBCAN_DIR)/%$(e)): $(SPLIT_DIR)/%
+$(foreach e, $(DBCAN_EXTS), $(DBCAN_DIR)/%.fasta$(e)): $(SPLIT_DIR)/%.fasta
 	@mkdir -p $(dir $@)
-	$(call HMMSCAN, $(dir $@)$(notdir $(basename $<)).out.dm, $<, $(dir $@)$(notdir $(basename $<)).out)
-	$(call HMMSCAN_PARSER, $(dir $@)$(notdir $(basename $<)).out.dm, $(dir $@)$(notdir $(basename $<)).out.dm.ps)
+	$(call HMMSCAN, $(dir $@)$(notdir $<).out.dm, $<, $(dir $@)$(notdir $<).out)
+	$(call HMMSCAN_PARSER, $(dir $@)$(notdir $<).out.dm, $(dir $@)$(notdir $<).out.dm.ps)
 
-$(DBCAN_CMB_FILE): $(filter-out $(DBCAN_CMB_FILE), $(DBCAN_DIR)/*.out.dm.ps)
+$(DBCAN_CMB_FILE): $(filter-out $(DBCAN_CMB_FILE), $(DBCAN_DIR)/*.fasta.out.dm.ps)
 	cat $^ > $@
 
 $(LOCATION_FILE): $(SIGNALP_CMB_FILE) $(SECRETOMEP_CMB_FILE) $(TMHMM_CMB_FILE) $(TARGETP_CMB_NPN_FILE)
@@ -219,7 +228,7 @@ $(LOCATION_FILE): $(SIGNALP_CMB_FILE) $(SECRETOMEP_CMB_FILE) $(TMHMM_CMB_FILE) $
 	$(call LOCATORP, $(word 1, $^), $(word 2, $^), $(word 3, $^), $(word 4, $^), $@)
 
 $(PANTHER_FILE): $(IPS_CMB_TSV_FILE) $(PANTHERFAMCLASS)
-	@mkdir $(dir $@)
+	@mkdir -p $(dir $@)
 	$(call PANTHERFAMS, $(word 1, $^), $@, $(word 2, $^))
 
 $(GOTERMS_FILE): $(IPS_CMB_TSV_FILE)
@@ -231,3 +240,7 @@ $(GOSLIMTERMS_FILE): $(GOTERMS_FILE)
 	$(call GOLONG2ASSOC, $<, $<.assoc)
 	$(call MAP_TO_SLIM,$<.assoc)|$(call GOASSOC2LONG, -, $@)
 	@rm -f $<.assoc
+
+$(SUPERFAMILY_FILE): $(IPS_CMB_TSV_FILE)
+	@mkdir -p $(dir $@)
+	$(call GET_SUPERFAMS, $<, $@)

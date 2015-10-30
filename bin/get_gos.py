@@ -65,51 +65,61 @@ def outhandler(fp, mode='w'):
 def main(
         infile,
         outfile,
-        outfmt,
         obofile,
-        pantherfile,
-        pfamfile,
-        smartfile,
-        interprofile,
-        prositefile,
-        printsfile,
-        prodomfile,
-        tigrfamfile,
-        pirsffile,
-        hamapfile,
-        domainfile,
-        datadir,
+        outfmt='long',
+        pantherfile=None,
+        pfamfile=None,
+        smartfile=None,
+        interprofile=None,
+        prositefile=None,
+        printsfile=None,
+        prodomfile=None,
+        tigrfamfile=None,
+        pirsffile=None,
+        hamapfile=None,
+        domainfile=None,
+        datadir=None,
         ):
     """ . """
     if datadir is None:
         datadir = ''
 
-    pantherdb = External2GO(pjoin(datadir, pantherfile), fmt='panther')
-    pfamdb = External2GO(pjoin(datadir, pfamfile))
-    smartdb = External2GO(pjoin(datadir, smartfile))
-    interprodb = External2GO(pjoin(datadir, interprofile))
-    prositedb = External2GO(pjoin(datadir, prositefile))
-    printsdb = External2GO(pjoin(datadir, printsfile))
-    prodomdb = External2GO(pjoin(datadir, prodomfile))
-    tigrfamdb = External2GO(pjoin(datadir, tigrfamfile))
-    pirsfdb = External2GO(pjoin(datadir, pirsffile))
-    hamapdb = External2GO(pjoin(datadir, hamapfile))
-    domaindb = External2GO(pjoin(datadir, domainfile), fmt='superfamily')
+    dbs = dict()
 
-    dbs = {
-        'PANTHER': pantherdb,
-        'Pfam': pfamdb,
-        'SMART': smartdb,
-        'IPR': interprodb,
-        'ProSitePatterns': prositedb,
-        'ProSiteProfiles': prositedb,
-        'PRINTS': printsdb,
-        'ProDom': prodomdb,
-        'TIGRFAM': tigrfamdb,
-        'PIRSF': pirsfdb,
-        'Hamap': hamapdb,
-        'SUPERFAMILY': domaindb,
-        }
+    if pantherfile is not None:
+        pantherdb = External2GO(pjoin(datadir, pantherfile), fmt='panther')
+        dbs['PANTHER'] = pantherdb
+    if pfamfile is not None:
+        pfamdb = External2GO(pjoin(datadir, pfamfile))
+        dbs['Pfam'] = pfamdb
+    if smartfile is not None:
+        smartdb = External2GO(pjoin(datadir, smartfile))
+        dbs['SMART'] = smartdb
+    if interprofile is not None:
+        interprodb = External2GO(pjoin(datadir, interprofile))
+        dbs['IPR'] = interprodb
+    if prositefile is not None:
+        prositedb = External2GO(pjoin(datadir, prositefile))
+        dbs['ProSitePatterns'] = prositedb
+        dbs['ProSiteProfiles'] = prositedb
+    if printsfile is not None:
+        printsdb = External2GO(pjoin(datadir, printsfile))
+        dbs['PRINTS'] = printsdb
+    if prodomfile is not None:
+        prodomdb = External2GO(pjoin(datadir, prodomfile))
+        dbs['ProDom'] = prodomdb
+    if tigrfamfile is not None:
+        tigrfamdb = External2GO(pjoin(datadir, tigrfamfile))
+        dbs['TIGRFAM'] = tigrfamdb
+    if pirsffile is not None:
+        pirsfdb = External2GO(pjoin(datadir, pirsffile))
+        dbs['PIRSF'] = pirsfdb
+    if hamapfile is not None:
+        hamapdb = External2GO(pjoin(datadir, hamapfile))
+        dbs['Hamap'] = hamapdb
+    if domainfile is not None:
+        domaindb = External2GO(pjoin(datadir, domainfile), fmt='superfamily')
+        dbs['SUPERFAMILY'] = domaindb
 
     ips = InterproscanResult(infile)
     godag = GODag(pjoin(datadir, obofile))
@@ -184,57 +194,57 @@ if __name__== '__main__':
         )
     arg_parser.add_argument(
         "--pantherfile",
-        default='PANTHER10.0_HMM_classifications',
+        default=None,
         help="Path to panther terms file"
         )
     arg_parser.add_argument(
         "--pfamfile",
-        default='pfam2go',
+        default=None,
         help=""
         )
     arg_parser.add_argument(
         "--smartfile",
-        default='smart2go',
+        default=None,
         help=""
         )
     arg_parser.add_argument(
         "--interprofile",
-        default='interpro2go',
+        default=None,
         help=""
         )
     arg_parser.add_argument(
         "--prositefile",
-        default='prosite2go',
+        default=None,
         help=""
         )
     arg_parser.add_argument(
         "--printsfile",
-        default='prints2go',
+        default=None,
         help=""
         )
     arg_parser.add_argument(
         "--prodomfile",
-        default='prodom2go',
+        default=None,
         help=""
         )
     arg_parser.add_argument(
         "--tigrfamfile",
-        default='tigrfams2go',
+        default=None,
         help=""
         )
     arg_parser.add_argument(
         "--pirsffile",
-        default='pirsf2go',
+        default=None,
         help=""
         )
     arg_parser.add_argument(
         "--hamapfile",
-        default='hamap2go',
+        default=None,
         help=""
         )
     arg_parser.add_argument(
         "--domainfile",
-        default='Domain2GO_supported_only_by_all.txt',
+        default=None,
         help=""
         )
     arg_parser.add_argument(

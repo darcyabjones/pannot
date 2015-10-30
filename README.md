@@ -65,6 +65,10 @@ wget http://csbl.bmb.uga.edu/dbCAN/download/FamInfo.txt -O data/FamInfo.txt
 wget http://csbl.bmb.uga.edu/dbCAN/download/CAZyDB-ec-info.txt -O data/CAZyDB-ec-info.txt
 wget ftp://ftp.pantherdb.org//hmm_classifications/current_release/PANTHER10.0_HMM_classifications -O data/PANTHER10.0_HMM_classifications
 
+wget http://www.supfam.org/SUPERFAMILY/function/scop.annotation.1.73.txt -O data/scop.annotation.1.73.txt
+wget http://www.supfam.org/SUPERFAMILY/function/scop.larger.categories -O data/scop.larger.categories
+wget http://scop.mrc-lmb.cam.ac.uk/scop/parse/dir.des.scop.txt_1.75 -O dir.des.scop.txt_1.75
+
 wget http://www.geneontology.org/external2go/pfam2go -O data/pfam2go
 wget http://www.geneontology.org/external2go/smart2go -O data/smart2go
 wget http://www.geneontology.org/external2go/interpro2go -O data/interpro2go

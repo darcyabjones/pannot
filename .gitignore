@@ -56,28 +56,19 @@ docs/_build/
 # PyBuilder
 target/
 
+data/*
 
-*.dat
-*.log
-*.out
-*.gff3
-*.tar.gz
-*.tsv
-*.gnuplot
-*.plp
-*.xml
-*.allHits
-*.topHits
-*.fasta
-*.fa
-*.faa
-*.asn
-*.ps
-*.dm
-
-*.txt
-*.txt.h3f
-*.txt.h3i
-*.txt.h3m
-*.txt.h3p
-
+dbCAN/*
+goterms/*
+interproscan/*
+location/*
+panther_terms/*
+pdb_deltablast/*
+secretomep/*
+signalp/*
+split_aa/*
+superfamily_terms/*
+swissprot_deltablast/*
+targetp/*
+tmhmm/*
+tpsi/*
