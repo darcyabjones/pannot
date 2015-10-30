@@ -21,6 +21,7 @@ tigrfams2go=$(DATA)/tigrfams2go
 SCOPANNOTS=$(DATA)/scop.annotation.1.73.txt
 SCOPDESCS=$(DATA)/dir.des.scop.txt_1.75
 SCOPCATS=$(DATA)/scop.larger.categories
+DBCANFAMINFO=$(DATA)/FamInfo.txt
 
 THREADS=1
 PYTHON=python
@@ -50,6 +51,7 @@ GOLONG2ASSOC=$(C)/bin/golong2assoc.py -i $(1) -o $(2)
 GOASSOC2LONG=$(C)/bin/goassoc2long.py -i $(1) -o $(2) --obofile $(go)
 MAP_TO_SLIM=map_to_slim.py --association_file=$(1) $(go) $(goslim)
 GET_SUPERFAMS=bin/get_superfams.py -i $(1) -o $(2) -a $(SCOPANNOTS) -d $(SCOPDESCS) -c $(SCOPCATS)
+GET_CAZY_FAMS=bin/get_cazy_fams.py -i $(1) -o $(2) -f $(DBCANFAMINFO)
 
 
 BLOCK_SIZE=1000
@@ -118,6 +120,8 @@ GOSLIMTERMS_FILE=$(GOTERMS_DIR)/goslimterms.tsv
 SUPERFAMILY_DIR=$(C)/superfamily_terms
 SUPERFAMILY_FILE=$(SUPERFAMILY_DIR)/superfamilies.tsv
 
+DBCANFAMS_DIR=$(C)/cazy_terms
+DBCANFAMS_FILE=$(DBCANFAMS_DIR)/cazy_fams.tsv
 
 ## Commands
 all: split signalp tmhmm targetp transposonpsi swissprot pdb secretomep \
@@ -134,7 +138,7 @@ secretomep: $(SECRETOMEP_FILES) $(SECRETOMEP_CMB_FILE)
 transposonpsi: $(TPSI_FILES) $(TPSI_CMB_FILE)
 swissprot: $(SWISSPROT_BLAST_FILES) $(SWISSPROT_CMB_TSV_FILE)
 pdb: $(PDB_BLAST_FILES) $(PDB_CMB_TSV_FILE)
-dbcan: $(DBCAN_FILES) $(DBCAN_CMB_FILE)
+dbcan: $(DBCAN_FILES) $(DBCAN_CMB_FILE) $(DBCANFAMS_FILE)
 locatorp: $(LOCATION_FILE)
 pantherfams: $(PANTHER_FILE)
 goterms: $(GOTERMS_FILE) $(GOSLIMTERMS_FILE)
@@ -244,3 +248,7 @@ $(GOSLIMTERMS_FILE): $(GOTERMS_FILE)
 $(SUPERFAMILY_FILE): $(IPS_CMB_TSV_FILE)
 	@mkdir -p $(dir $@)
 	$(call GET_SUPERFAMS, $<, $@)
+
+$(DBCANFAMS_FILE): $(DBCAN_CMB_FILE)
+	@mkdir -p $(dir $@)
+	$(call GET_CAZY_FAMS, $<, $@)
