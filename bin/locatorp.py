@@ -242,11 +242,16 @@ def main(signalp, secretomep, tmhmm, targetp, outfile, secretomep_thres=0.8):
 
             transmembrane = False
             tmhmmd = tmhmm_props[name]
-            if (tmhmmd['Number of predicted TMHs'] == 1 and
-                    tmhmmd['Exp number, first 60 AAs'] >= 10):
-                pass
-            elif tmhmmd['Exp number of AAs in TMHs'] > 18:
-                transmembrane = True
+            try:
+                if (tmhmmd['Number of predicted TMHs'] == 1 and
+                        tmhmmd['Exp number, first 60 AAs'] >= 10):
+                    pass
+                elif tmhmmd['Exp number of AAs in TMHs'] > 18:
+                    transmembrane = True
+            except:
+                print(name)
+                print(tmhmmd)
+                print(d['tmhmm'])
             """
             num_tm = 0
             firstn = 60

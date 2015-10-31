@@ -1,6 +1,6 @@
 C=$(shell pwd)
 DATA=$(C)/data
-PROT_FILE=MNH120.Auto.protein.faa
+PROT_FILE=I5V.codingquarry.faa
 ISOLATE=$(word 1, $(subst ., ,$(PROT_FILE)))
 EMPTY :=
 SPACE := $(EMPTY) $(EMPTY)
@@ -32,7 +32,7 @@ SPLITTER=$(PYTHON) $(C)/bin/splitter.py -i $(1) -p $(2) -n $(3)
 IPS=@echo /usr/local/interproscan/5.15-54.0/interproscan-5.15-54.0/interproscan.sh -f TSV,XML,GFF3,HTML,SVG --goterms -dp --iprlookup --pathways -t p -i $(1) --output-dir $(2)
 SIGNALP=signalp -f short -n $(1) -l $(2) < $(3) > $(4)
 TMHMM=/usr/local/tmhmm/2.0c/bin/tmhmm < $(1) > $(2)
-TARGETP=targetp -c -$(1) < $(2) > $(3)
+TARGETP=targetp -c -$(1) > $(2)
 RENAME=$(PYTHON) $(C)/bin/rename_fasta.py -i $(1) -o $(2) -j $(3)
 SECRETOMEP=/usr/local/secretomep/1.0/secretomep
 TPSI=/usr/local/transposonpsi/08222010/transposonPSI.pl $(1) prot
@@ -111,17 +111,17 @@ LOCATION_DIR=$(C)/location
 LOCATION_FILE=$(LOCATION_DIR)/$(ISOLATE).location.tsv
 
 PANTHER_DIR=$(C)/panther_terms
-PANTHER_FILE=$(PANTHER_DIR)/panther_fams.tsv
+PANTHER_FILE=$(PANTHER_DIR)/$(ISOLATE).panther_fams.tsv
 
 GOTERMS_DIR=$(C)/goterms
-GOTERMS_FILE=$(GOTERMS_DIR)/goterms.tsv
-GOSLIMTERMS_FILE=$(GOTERMS_DIR)/goslimterms.tsv
+GOTERMS_FILE=$(GOTERMS_DIR)/$(ISOLATE).goterms.tsv
+GOSLIMTERMS_FILE=$(GOTERMS_DIR)/$(ISOLATE).goslimterms.tsv
 
 SUPERFAMILY_DIR=$(C)/superfamily_terms
-SUPERFAMILY_FILE=$(SUPERFAMILY_DIR)/superfamilies.tsv
+SUPERFAMILY_FILE=$(SUPERFAMILY_DIR)/$(ISOLATE).superfamilies.tsv
 
 DBCANFAMS_DIR=$(C)/cazy_terms
-DBCANFAMS_FILE=$(DBCANFAMS_DIR)/cazy_fams.tsv
+DBCANFAMS_FILE=$(DBCANFAMS_DIR)/$(ISOLATE).cazy_fams.tsv
 
 ## Commands
 all: split signalp tmhmm targetp transposonpsi swissprot pdb secretomep \
@@ -173,7 +173,8 @@ $(TMHMM_CMB_FILE): $(TMHMM_FILES)
 
 $(TARGETP_DIR)/%.targetp.npn.out: $(SPLIT_DIR)/%
 	@mkdir -p $(dir $@)
-	$(call TARGETP,N, $<, $@)
+	$(call RENAME, $<, -, $@.json)|$(call TARGETP,N, $@) > $@.tmp
+	$(call RENAME, $@.tmp, $@, $@.json) -d
 
 $(TARGETP_CMB_NPN_FILE): $(filter-out $(TARGETP_CMB_NPN_FILE), $(TARGETP_DIR)/*.targetp.npn.out)
 	echo '' > $@
@@ -181,7 +182,8 @@ $(TARGETP_CMB_NPN_FILE): $(filter-out $(TARGETP_CMB_NPN_FILE), $(TARGETP_DIR)/*.
 
 $(TARGETP_DIR)/%.targetp.pn.out: $(SPLIT_DIR)/%
 	@mkdir -p $(dir $@)
-	$(call TARGETP,P, $<, $@)
+	$(call RENAME, $<, -, $@.json)|$(call TARGETP,P, $@) > $@.tmp
+	$(call RENAME, $@.tmp, $@, $@.json) -d
 
 $(TARGETP_CMB_PN_FILE): $(filter-out $(TARGETP_CMB_PN_FILE), $(TARGETP_DIR)/*.targetp.pn.out)
 	echo '' > $@
