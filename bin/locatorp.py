@@ -147,15 +147,25 @@ def tmhmm_handler(handle):
         ('start', int),
         ('end', int),
         ]
+    prop_split = re.compile(r':\s*')
     i = 0
     for line in handle:
+        props = None
         if line.startswith('#'):
+            line = line.lstrip('#').strip().split(' ', 1)
+            name, prop = line
+            if prop == 'POSSIBLE N-term signal sequence':
+                continue
+            key, val = prop_split.split(prop)
+            val = float(val)
+            yield None, {'name': name}, {key: val}
             continue
+
         line = split_regex.split(line.strip())
         l = dict()
         for (name, type_), val in zip(cols, line):
             l[name] = type_(val)
-        yield i, l
+        yield i, l, props
         i += 1
 
 def out_writer(line, sep='\t'):
@@ -179,6 +189,7 @@ def main(signalp, secretomep, tmhmm, targetp, outfile, secretomep_thres=0.8):
     tmhmm_table = list()
 
     names = defaultdict(lambda: defaultdict(list))
+    tmhmm_props = defaultdict(dict)
 
     # Process signalp
     with inhandler(signalp) as handle:
@@ -200,7 +211,10 @@ def main(signalp, secretomep, tmhmm, targetp, outfile, secretomep_thres=0.8):
 
     # Process tmhmm
     with inhandler(tmhmm) as handle:
-        for i, line in tmhmm_handler(handle):
+        for i, line, props in tmhmm_handler(handle):
+            if props is not None:
+                tmhmm_props[line['name']].update(props)
+                continue
             tmhmm_table.append(line)
             names[line['name']]['tmhmm'].append(i)
 
@@ -227,6 +241,13 @@ def main(signalp, secretomep, tmhmm, targetp, outfile, secretomep_thres=0.8):
                     break
 
             transmembrane = False
+            tmhmmd = tmhmm_props[name]
+            if (tmhmmd['Number of predicted TMHs'] == 1 and
+                    tmhmmd['Exp number, first 60 AAs'] >= 10):
+                pass
+            elif tmhmmd['Exp number of AAs in TMHs'] > 18:
+                transmembrane = True
+            """
             num_tm = 0
             firstn = 60
             first_thres = 10
@@ -244,8 +265,9 @@ def main(signalp, secretomep, tmhmm, targetp, outfile, secretomep_thres=0.8):
                 pass
             elif num_tm > 0:
                 transmembrane = True
+            """
 
-            if secreted or signal or secreted_target:
+            if (secreted or signal) and secreted_target:
                 line = {'name': name,
                         'location': 'secreted',
                         'membrane': transmembrane}
