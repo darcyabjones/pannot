@@ -1,6 +1,6 @@
 C=$(shell pwd)
 DATA=$(C)/data
-PROT_FILE=B04.protein.faa
+PROT_FILE=MNH120.Auto.protein.faa
 ISOLATE=$(word 1, $(subst ., ,$(PROT_FILE)))
 EMPTY :=
 SPACE := $(EMPTY) $(EMPTY)
@@ -125,7 +125,7 @@ DBCANFAMS_FILE=$(DBCANFAMS_DIR)/cazy_fams.tsv
 
 ## Commands
 all: split signalp tmhmm targetp transposonpsi swissprot pdb secretomep \
-	dbcan interproscan pantherfams goterms superfamilies
+	dbcan interproscan pantherfams goterms superfamilies locatorp
 
 #interproscan
 
