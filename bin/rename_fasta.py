@@ -8,7 +8,9 @@ author = "Darcy Jones"
 date = "1 October 2015"
 email = "darcy.ab.jones@gmail.com"
 short_blurb = (
-    'Renames fasta sequences.'
+    'Renames fasta sequences.\n'
+    'Codes sequence IDs as g followed by an integer left-filled with zeros (e.g. g0001, g0002).\n'
+    'Can replace original sequence IDs from coded output using a simple regular expression system.'
     )
 license = (
     '{program}-{version}\n'
@@ -57,100 +59,114 @@ def outhandler(fp, mode='w'):
     else:
         return open(fp, mode)
 
-def main(infile, outfile, json_file, decode=False, split=r'\s+', col=0, hold=False):
+def main(infile, outfile, json_file, length, decode=False):
     start_regex = re.compile(r'>')
-    split_regex = re.compile(split)
     if not decode:
         with inhandler(infile, mode='rU') as inhandle, \
-                outhandler(outfile, mode='w') as outhandle, \
-                outhandler(json_file, mode='w') as jsonhandle:
+                outhandler(outfile, mode='w') as outhandle:
             record_num = 0
             lines = list()
             new_ids = dict()
+
             for line in inhandle:
                 line = line.strip()
                 if line == '':
                     continue
                 elif start_regex.match(line) is not None:
-                    if not hold:
-                        outhandle.write('\n'.join(lines) + '\n')
-                        lines = list()
-                    new_id = "g{:0=9}".format(record_num)
+                    outhandle.write('\n'.join(lines) + '\n')
+                    lines = list()
+
+                    new_id = ("g{{:0={}}}".format(length)).format(record_num)
                     new_ids[new_id] = line.lstrip('>').strip().split(' ')[0]
                     line = '>{}'.format(new_id)
                     record_num += 1
                 lines.append(line)
-            json.dump(new_ids, jsonhandle)
+
             outhandle.write('\n'.join(lines) + '\n')
+            with outhandler(json_file, mode='w') as jsonhandle:
+                json.dump(new_ids, jsonhandle)
     else:
-        with inhandler(infile, mode='rU') as inhandle,\
-                outhandler(outfile, mode='w') as outhandle,\
-                inhandler(json_file, mode='r') as jsonhandle:
+        with inhandler(json_file, mode='r') as jsonhandle:
             new_ids = json.load(jsonhandle)
+
+        with inhandler(infile, mode='rU') as inhandle,\
+                outhandler(outfile, mode='w') as outhandle:
+
             def repl(m):
                 return new_ids[m.group(0)]
 
             id_regex = re.compile('|'.join(new_ids.keys()))
-            lines = list()
+
             for line in inhandle:
                 line = line.strip()
-                if line == '' or line.startswith('#'):
-                    lines.append(line)
-                    if not hold:
-                        outhandle.write(line + '\n')
+                if line == '':
+                    outhandle.write('\n')
                 else:
-                    sline = split_regex.split(line)
                     line = id_regex.sub(repl, line)
-                    lines.append(line)
-                    if not hold:
-                        outhandle.write(line + '\n')
-            if hold:
-                outhandle.write('\n'.join(lines))
+                    outhandle.write(line + '\n')
     return
 
 ############################ Argument Handling ###############################
 
 if __name__== '__main__':
     arg_parser = argparse.ArgumentParser(
-      description=license,
-      )
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=license,
+        epilog=(
+            'Example usage:'
+            '\n'
+            '$ %(prog)s -i my_fasta.fa -o my_fasta.coded.fa -j ./codes.json\n'
+            '$ annoyingprogram --in my_fasta.coded.fa --out my_output.coded.dat\n'
+            '$ %(prog)s -i my_output.coded.dat -o my_output.dat -j ./codes.json --decode\n'
+            '\n'
+            'Note: Currently you can\'t have the coding and decoding steps in the same piped-chain e.g.:\n'
+            '\n'
+            '$ %(prog)s -i my_fasta.fa | annoyingprogram | %(prog)s -o my_output.dat --decode \n'
+            '\n'
+            'Would give an error because the decoding step is trying to read the JSON before it is written. '
+            'Try using an intermediate file instead.\n'
+            )
+        )
     arg_parser.add_argument(
         "-i", "--infile",
         default='-',
-        help="Default is '-' (stdin)"
+        help=(
+            "Path to the input file."
+            "Default is '-' (stdin)."
+            )
         )
     arg_parser.add_argument(
         "-o", "--outfile",
         default='-',
-        help="Default is '-' (stdout)"
+        help=(
+            "Path to write output to."
+            "Default is '-' (stdout)."
+            )
         )
     arg_parser.add_argument(
         "-j", "--json",
         dest='json_file',
         default='codes.json',
-        help="",
+        help=(
+            "Path to JSON file to store codes/retrieve original names from."
+            "Default is 'codes.json'."
+            )
+        )
+    arg_parser.add_argument(
+        "-l", "--length",
+        default='9',
+        help=(
+            "Length of the integer to give. Default is 9, (e.g. g000000000)."
+            )
         )
     arg_parser.add_argument(
         "-d", "--decode",
         default=False,
         action='store_true',
-        help="",
-        )
-    arg_parser.add_argument(
-        "-s", "--split",
-        default=r'\s+',
-        help="",
-        )
-    arg_parser.add_argument(
-        "-c", "--col",
-        default=0,
-        help="",
-        )
-    arg_parser.add_argument(
-        "-l", "--hold",
-        default=False,
-        action='store_true',
-        help="",
+        help=(
+            "Flag signalling that the program should replace codes with "
+            "the original names."
+            )
         )
 
 
