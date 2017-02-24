@@ -1,6 +1,6 @@
 # pannot
 
-Darcy Jones - <da8jones@students.latrobe.edu.au>
+Darcy Jones - <darcy.a.jones@curtin.edu.au>
 
 pannot runs a series of analyses on a set a protein sequences (a predicted proteome for example) and combines them into a series of GFF3, and query friendly tsv files.
 
@@ -18,7 +18,6 @@ But if you're interested, please feel free to contact me.
 - [x] signalp
 - [x] tmhmm
 - [x] targetp
-- [ ] secretomep
 - [x] transposonPSI
 - [ ] [PredictProtiein](https://www.predictprotein.org/) secondary structure prediction
 - [x] [dbCAN](http://csbl.bmb.uga.edu/dbCAN/index.php)
@@ -58,7 +57,7 @@ $ update_blastdb.pl --decompress taxdb cdd_delta pdbaa swissprot
 ```
 
 
-download extra databases:
+To download extra databases (update versions as necessary):
 
 ```bash
 wget http://csbl.bmb.uga.edu/dbCAN/download/FamInfo.txt -O data/FamInfo.txt

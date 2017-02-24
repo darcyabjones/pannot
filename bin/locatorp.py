@@ -87,25 +87,6 @@ def signalp_handler(handle):
         yield i, l
         i += 1
 
-def secretomep_handler(handle):
-    cols = [
-        ('name', str),
-        ('nnscore', float),
-        ('odds', float),
-        ('weighted', float),
-        ('warning', float),
-        ]
-    i = 0
-    for line in handle:
-        if line.startswith('#'):
-            continue
-        line = split_regex.split(line.strip())
-        l = dict()
-        for (name, type_), val in zip(cols, line):
-            l[name] = type_(val)
-        yield i, l
-        i += 1
-
 def targetp_handler(handle):
     cols = [
         ('name', str),
@@ -172,6 +153,7 @@ def out_writer(line, sep='\t'):
     cols = [
         'name',
         'location',
+        'signal',
         'membrane',
         ]
     outline = list()
@@ -182,9 +164,8 @@ def out_writer(line, sep='\t'):
             outline.append(str(line[col]))
     return sep.join(outline)
 
-def main(signalp, secretomep, tmhmm, targetp, outfile, secretomep_thres=0.8):
+def main(signalp, tmhmm, targetp, outfile, secretomep_thres=0.8):
     targetp_table = list()
-    secretomep_table = list()
     signalp_table = list()
     tmhmm_table = list()
 
@@ -196,12 +177,6 @@ def main(signalp, secretomep, tmhmm, targetp, outfile, secretomep_thres=0.8):
         for i, line in signalp_handler(handle):
             signalp_table.append(line)
             names[line['name']]['signalp'].append(i)
-
-    # Process secretomep
-    with inhandler(secretomep) as handle:
-        for i, line in secretomep_handler(handle):
-            secretomep_table.append(line)
-            names[line['name']]['secretomep'].append(i)
 
     # Process targetp
     with inhandler(targetp) as handle:
@@ -219,6 +194,14 @@ def main(signalp, secretomep, tmhmm, targetp, outfile, secretomep_thres=0.8):
             names[line['name']]['tmhmm'].append(i)
 
     with outhandler(outfile) as handle:
+        cols = {
+            'name': 'name',
+            'location': 'location',
+            'signal': 'signal',
+            'membrane': 'membrane'
+            }
+        handle.write(out_writer(cols) + '\n')
+
         for name, d in names.items():
             signal = False
             for line in d['signalp']:
@@ -226,32 +209,24 @@ def main(signalp, secretomep, tmhmm, targetp, outfile, secretomep_thres=0.8):
                 if signal:
                     break
 
-            secreted = False
-            for line in d['secretomep']:
-                secreted = secretomep_table[line]['nnscore'] >= secretomep_thres
-                if secreted:
-                    break
-
             mito_target = False
             secreted_target = False
             for line in d['targetp']:
                 mito_target = targetp_table[line]['loc'] == 'M'
                 secreted_target = targetp_table[line]['loc'] == 'S'
-                if secreted:
-                    break
 
             transmembrane = False
             tmhmmd = tmhmm_props[name]
+            """
             try:
                 if (tmhmmd['Number of predicted TMHs'] == 1 and
                         tmhmmd['Exp number, first 60 AAs'] >= 10):
                     pass
                 elif tmhmmd['Exp number of AAs in TMHs'] > 18:
                     transmembrane = True
-            except:
-                print(name)
-                print(tmhmmd)
-                print(d['tmhmm'])
+            except KeyError:
+                pass
+                # No predicted transmembrane regions
             """
             num_tm = 0
             firstn = 60
@@ -266,24 +241,20 @@ def main(signalp, secretomep, tmhmm, targetp, outfile, secretomep_thres=0.8):
 
             if all([num_tm == 1,
                     firstn - len(firstaa) > first_thres,
-                    signal or secreted]):
+                    signal]):
                 pass
             elif num_tm > 0:
                 transmembrane = True
-            """
 
-            if (secreted or signal) and secreted_target:
-                line = {'name': name,
-                        'location': 'secreted',
-                        'membrane': transmembrane}
+
+            line = {'name': name, 'membrane': transmembrane, 'signal': signal}
+            if secreted_target:
+                line['location'] = 'secreted'
             elif mito_target:
-                line = {'name': name,
-                        'location': 'mitochondrial',
-                        'membrane': transmembrane}
+                line['location'] = 'mitochondrial'
             else:
-                line = {'name': name,
-                        'location': None,
-                        'membrane': transmembrane}
+                line['location'] = None
+
             handle.write(out_writer(line) + '\n')
     return
 
@@ -296,10 +267,6 @@ if __name__== '__main__':
       )
     arg_parser.add_argument(
         "-s", "--signalp",
-        help=""
-        )
-    arg_parser.add_argument(
-        "-e", "--secretomep",
         help=""
         )
     arg_parser.add_argument(

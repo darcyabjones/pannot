@@ -66,7 +66,11 @@ def main(infile, outfile, obofile):
     with inhandler(infile) as inhandle, outhandler(outfile) as outhandle:
         for line in inhandle:
             line = line.rstrip('\n')
-            seqid, gos = line.split('\t')
+            try:
+                seqid, gos = line.split('\t')
+            except ValueError:
+                sys.stderr.write("Excluded " + line + "\n")
+                continue
             gos = set(gos.split(';'))
             ontologies = set()
             for go in gos:
